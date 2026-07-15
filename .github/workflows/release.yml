@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows (MSI + NSIS)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Setup Rust (stable + MSVC)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build & publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'MiniMD ${{ github.ref_name }}'
+          releaseBody: |
+            ## 安装方式 / Installation
+
+            下载对应格式的安装包：
+            - **`.msi`** — 标准 Windows 安装包（推荐，写入「程序和功能」）
+            - **`.exe`** (NSIS) — 便携安装程序
+
+            双击安装包按向导完成即可，安装后 `.md` / `.markdown` / `.mdx` 文件会自动关联到 MiniMD。
+          releaseDraft: true
+          prerelease: false
+          args: --target x86_64-pc-windows-msvc
