@@ -110,7 +110,7 @@ npm run tauri build
 
 # 跨平台构建（需要在对应平台或装有交叉编译工具链的机器上）
 npm run tauri build -- --target x86_64-pc-windows-msvc      # Windows MSI + NSIS
-npm run tauri build -- --target universal-apple-darwin      # macOS DMG（Intel + Apple Silicon）
+npm run tauri build -- --target aarch64-apple-darwin        # macOS DMG（仅 Apple Silicon / M1+）
 npm run tauri build -- --target x86_64-unknown-linux-gnu    # Linux deb + rpm + AppImage
 ```
 
@@ -198,7 +198,7 @@ npm run lint               # oxlint 代码检查
 | 平台 | 安装包 | 文件关联 | 代码签名 |
 |------|--------|---------|---------|
 | **Windows 10/11** | MSI（标准）+ NSIS（便携） | MSI 自动 / NSIS 手动 | 未签名（SmartScreen 提示） |
-| **macOS 10.15+** | DMG（Intel + Apple Silicon 通用包） | 安装后自动 | ⚠️ ad-hoc 签名（首次需右键「打开」） |
+| **macOS 10.15+** | DMG（仅 Apple Silicon / M1+） | 安装后自动 | ⚠️ ad-hoc 签名（首次需右键「打开」） |
 | **Linux x86_64** | AppImage + deb + rpm | 自动（通过 .desktop） | 未签名 |
 
 > **关于 macOS 签名**：本项目未购买 Apple Developer ID（$99/年），采用系统自带的 ad-hoc 签名。功能完全正常，只是首次安装需要右键「打开」绕过 Gatekeeper。
