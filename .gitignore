@@ -45,3 +45,6 @@ coverage/
 *.local
 .cache/
 .parcel-cache/
+
+# TypeScript build cache
+*.tsbuildinfo
