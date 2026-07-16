@@ -51,6 +51,6 @@ jobs:
             - **`.exe`** (NSIS) — 便携安装程序
 
             双击安装包按向导完成即可，安装后 `.md` / `.markdown` / `.mdx` 文件会自动关联到 MiniMD。
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: --target x86_64-pc-windows-msvc
