@@ -7,7 +7,7 @@
 ![MiniMD 主界面](screenshots/preview.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](#-路线图-roadmap)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](#-平台支持-platform-support)
 [![Tauri](https://img.shields.io/badge/Tauri-2.x-FFC131?logo=tauri&logoColor=white)](https://tauri.app/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -33,7 +33,7 @@
 - 📊 **Mermaid 图表** — 流程图、时序图、类图、甘特图等
 - 🗂️ **多标签页管理** — 同时打开多个文件，未保存状态标识（`*`），一键新建 / 关闭
 - 🌓 **明亮 / 暗黑主题** — 一键切换，跟随你的工作节奏
-- 📁 **原生文件集成** — 注册 `.md` / `.markdown` / `.mdx` 文件关联，**双击本地 Markdown 文件直接打开**
+- 📁 **原生文件集成** — 注册 `.md` / `.markdown` / `.mdx` 文件关联，**双击本地 Markdown 文件直接打开**（macOS 首次需右键「打开」）
 - 🔁 **单实例运行** — 已运行时再次双击文件，会激活已有窗口并在新标签页中打开
 - ⌨️ **常用快捷键** — `Ctrl+N` 新建 / `Ctrl+O` 打开 / `Ctrl+S` 保存 / `Ctrl+B` 粗体 / `Ctrl+I` 斜体 / `Ctrl+K` 链接
 - 🪶 **极致轻量** — Tauri 打包后安装包约 5 MB，启动 < 3 秒，内存占用远低于 Electron 类应用
@@ -49,14 +49,33 @@
 
 ### 🚀 快速开始
 
-#### 方式一：下载预编译安装包（Windows 用户）
+#### 方式一：下载预编译安装包
 
-前往 [Releases](https://github.com/zhangy12385/minimd/releases) 页面下载最新的 `MiniMD-v*.msi` 或 `MiniMD-v*-setup.exe`。
+前往 [Releases](https://github.com/zhangy12385/minimd/releases) 页面，根据你的平台选择对应格式：
 
-- **MSI**：标准 Windows 安装包，会写入「程序和功能」。
-- **NSIS `.exe`**：便携安装程序。
+| 平台 | 推荐格式 | 备选 |
+|------|---------|------|
+| **Windows** | `*.msi`（标准安装包） | `*-setup.exe`（便携版，**不自动关联 .md**，见下方说明） |
+| **macOS** | `*.dmg` | — |
+| **Linux** | `*.AppImage`（通用，下载即用） | `*.deb`（Debian/Ubuntu）/ `*.rpm`（Fedora/RHEL） |
 
-安装完成后，`.md` / `.markdown` / `.mdx` 文件会自动关联到 MiniMD，**双击即可打开**。
+##### ⚠️ macOS 用户首次安装必读
+
+本项目**未使用 Apple Developer ID 签名**（每年 $99 美元的开发者账号），因此首次打开会看到「无法验证开发者」的提示。**解决方法**：
+
+1. 在 Finder 进入「应用程序」文件夹
+2. **右键**点击 `MiniMD.app` → 选择「**打开**」
+3. 在弹出的对话框中再次点「**打开**」
+4. 之后即可正常双击启动
+
+> 升级新版本时如再次遇到同样提示，重复上述步骤即可。
+
+##### ⚠️ Windows 便携版用户
+
+`*-setup.exe`（NSIS 便携版）**不会**自动注册 `.md` 文件关联。如需在资源管理器双击 `.md` 文件直接用 MiniMD 打开，请二选一：
+
+- **改用 `.msi` 安装版**（推荐，安装时自动注册关联）
+- **手动关联**：右键任意 `.md` 文件 → 「打开方式」→ 「选择其他应用」→ 选 MiniMD → 勾选「始终使用此应用打开」→ 确定
 
 #### 方式二：从源码构建
 
@@ -83,17 +102,24 @@ npm install
 npm run tauri dev
 ```
 
-**生产构建（生成 MSI + NSIS 安装包）**
+**生产构建（生成对应平台的安装包）**
 
 ```bash
+# 当前平台默认构建
 npm run tauri build
+
+# 跨平台构建（需要在对应平台或装有交叉编译工具链的机器上）
+npm run tauri build -- --target x86_64-pc-windows-msvc      # Windows MSI + NSIS
+npm run tauri build -- --target universal-apple-darwin      # macOS DMG（Intel + Apple Silicon）
+npm run tauri build -- --target x86_64-unknown-linux-gnu    # Linux deb + rpm + AppImage
 ```
 
-构建产物：
+构建产物（Windows 示例）：
 
 ```
-src-tauri/target/release/bundle/msi/MiniMD_0.1.0_x64_zh-CN.msi
-src-tauri/target/release/bundle/nsis/MiniMD_0.1.0_x64-setup.exe
+src-tauri/target/x86_64-pc-windows-msvc/release/bundle/
+├── msi/MiniMD_0.1.0_x64_zh-CN.msi
+└── nsis/MiniMD_0.1.0_x64-setup.exe
 ```
 
 ### 🧱 技术栈
@@ -166,6 +192,16 @@ npm run lint               # oxlint 代码检查
 ```
 
 > 详细开发指南（新增插件、新增工具栏按钮、调整目录宽度、调整窗口尺寸等）请见 [DEV-DOC.md](DEV-DOC.md)。
+
+### 💻 平台支持
+
+| 平台 | 安装包 | 文件关联 | 代码签名 |
+|------|--------|---------|---------|
+| **Windows 10/11** | MSI（标准）+ NSIS（便携） | MSI 自动 / NSIS 手动 | 未签名（SmartScreen 提示） |
+| **macOS 10.15+** | DMG（Intel + Apple Silicon 通用包） | 安装后自动 | ⚠️ ad-hoc 签名（首次需右键「打开」） |
+| **Linux x86_64** | AppImage + deb + rpm | 自动（通过 .desktop） | 未签名 |
+
+> **关于 macOS 签名**：本项目未购买 Apple Developer ID（$99/年），采用系统自带的 ad-hoc 签名。功能完全正常，只是首次安装需要右键「打开」绕过 Gatekeeper。
 
 ### 🗺 路线图
 

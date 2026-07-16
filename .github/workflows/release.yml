@@ -10,9 +10,22 @@ permissions:
   contents: write
 
 jobs:
-  build-windows:
-    name: Build Windows (MSI + NSIS)
-    runs-on: windows-latest
+  build:
+    name: Build ${{ matrix.os-name }} (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            os-name: Windows
+          - platform: macos-latest
+            target: universal-apple-darwin
+            os-name: macOS
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            os-name: Linux
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,15 +36,26 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Setup Rust (stable + MSVC)
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.target }}
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: ./src-tauri -> target
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
 
       - name: Install npm dependencies
         run: npm ci
@@ -44,13 +68,39 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'MiniMD ${{ github.ref_name }}'
           releaseBody: |
-            ## 安装方式 / Installation
+            ## 📥 安装方式 / Installation
 
-            下载对应格式的安装包：
-            - **`.msi`** — 标准 Windows 安装包（推荐，写入「程序和功能」）
-            - **`.exe`** (NSIS) — 便携安装程序
+            根据你的平台下载对应格式的安装包：
 
-            双击安装包按向导完成即可，安装后 `.md` / `.markdown` / `.mdx` 文件会自动关联到 MiniMD。
+            | 平台 | 推荐安装包 | 备选 |
+            |------|----------|------|
+            | **Windows** | `*.msi` | `*-setup.exe`（便携版，**不会自动关联 .md 文件**，见下方说明） |
+            | **macOS** | `*.dmg` | — |
+            | **Linux** | `*.AppImage` | `*.deb`（Debian/Ubuntu）/ `*.rpm`（Fedora/RHEL） |
+
+            ## ⚠️ macOS 用户首次安装必看
+
+            由于本项目未使用 Apple Developer ID 签名（每年 $99 的开发者账号），首次打开会看到「无法验证开发者」提示。**解决方法**：
+
+            1. 在 Finder 中进入「应用程序」
+            2. **右键**点击 `MiniMD.app` → 选择「打开」
+            3. 在弹出对话框中再次点「打开」
+            4. 之后即可正常双击启动
+
+            ## ⚠️ Windows 便携版用户
+
+            `*-setup.exe`（NSIS 便携版）**不会**自动关联 `.md` 文件。如需在资源管理器双击 `.md` 文件直接用 MiniMD 打开，请二选一：
+
+            1. **改用 `.msi` 安装版**（推荐，文件关联自动生效）
+            2. **手动关联**：右键任意 `.md` 文件 → 「打开方式」→ 「选择其他应用」→ 选 MiniMD → 勾选「始终使用此应用打开」
+
+            ## 📂 文件关联
+
+            | 平台 | MSI / DMG / DEB 安装版 | Windows 便携版 | macOS |
+            |------|------------------------|----------------|-------|
+            | 双击 `.md` 打开 | ✅ 自动 | ❌ 需手动关联 | ✅ 首次启动后自动注册 |
+
+            关联后，双击本地 Markdown 文件会启动 MiniMD 并在新标签页中打开。
           releaseDraft: false
           prerelease: false
-          args: --target x86_64-pc-windows-msvc
+          args: --target ${{ matrix.target }}
